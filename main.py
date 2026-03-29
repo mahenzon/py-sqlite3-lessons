@@ -127,6 +127,84 @@ def insert_data(
     cur.connection.commit()
 
 
+def show_one_recipe(
+    cur: sqlite3.Cursor,
+    title: str,
+) -> None:
+    result = cur.execute(
+        """
+        SELECT title, description 
+        FROM recipes
+        WHERE title = ?
+        LIMIT 1
+    """,
+        (title,),
+    )
+    row = result.fetchone()
+    print("Title:", row["title"])
+    print("Description:", row["description"])
+
+
+def update_data(
+    cur: sqlite3.Cursor,
+) -> None:
+    title = "Chicken salad"
+    show_one_recipe(cur, title)
+    res = cur.execute(
+        """
+    UPDATE recipes
+    SET description = :description
+    WHERE title = :title
+    """,
+        {
+            "title": title,
+            "description": "chicken, iceberg salad, mayo, cherry tomatoes",
+        },
+    )
+    print("updated", res.rowcount, "row(s)")
+    show_one_recipe(cur, title)
+
+    print()
+
+    update_params = [
+        {
+            "title": "%burger%",
+            "prefix": "[Burgers]",
+        },
+        {
+            "title": "%soup%",
+            "prefix": "[Soups]",
+        },
+        {
+            "title": "%salad%",
+            "prefix": "[Salads]",
+        },
+    ]
+    res = cur.executemany(
+        """
+        UPDATE recipes
+        SET description = :prefix || ' ' || description
+        WHERE title like :title
+        """,
+        update_params,
+    )
+
+    print("updated", res.rowcount, "row(s)")
+
+    cur.connection.commit()
+
+
+def show_all_recipes(
+    cur: sqlite3.Cursor,
+) -> None:
+    res = cur.execute("SELECT id, title, description FROM recipes")
+    for row in res.fetchall():
+        print("--- Recipe ---")
+        print("#", row["id"])
+        print("Title:", row["title"])
+        print("Description:", row["description"])
+
+
 def main() -> None:
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -134,18 +212,8 @@ def main() -> None:
 
     create_table(cur, drop=True)
     insert_data(cur)
-
-    res = cur.execute("SELECT id, title, description FROM recipes")
-    for row in res.fetchall():
-        # print("--- Recipe ---", row)
-        # print("#", row[0])
-        # print("Title:", row[1])
-        # print("Description:", row[2])
-        print("--- Recipe ---")
-        print("#", row["id"])
-        print("Title:", row["title"])
-        print("Description:", row["description"])
-
+    update_data(cur)
+    show_all_recipes(cur)
     conn.close()
 
 
