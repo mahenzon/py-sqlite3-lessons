@@ -141,6 +141,9 @@ def show_one_recipe(
         (title,),
     )
     row = result.fetchone()
+    if not row:
+        return
+
     print("Title:", row["title"])
     print("Description:", row["description"])
 
@@ -194,6 +197,35 @@ def update_data(
     cur.connection.commit()
 
 
+def delete_data(
+    cur: sqlite3.Cursor,
+) -> None:
+    title = "Pancakes"
+    show_one_recipe(cur, title)
+    res = cur.execute(
+        """
+    DELETE FROM recipes
+    WHERE title = ?
+    """,
+        (title,),
+    )
+    print("deleted", res.rowcount, "row(s)")
+    show_one_recipe(cur, title)
+
+    res = cur.execute(
+        """
+        DELETE FROM recipes
+        WHERE title like :title
+        """,
+        {
+            "title": "%salad%",
+        },
+    )
+    print("deleted", res.rowcount, "row(s)")
+
+    cur.connection.commit()
+
+
 def show_all_recipes(
     cur: sqlite3.Cursor,
 ) -> None:
@@ -213,6 +245,7 @@ def main() -> None:
     create_table(cur, drop=True)
     insert_data(cur)
     update_data(cur)
+    delete_data(cur)
     show_all_recipes(cur)
     conn.close()
 
