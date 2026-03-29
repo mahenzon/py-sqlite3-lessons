@@ -7,28 +7,32 @@ DB_PATH = BASE_DIR / DB_FILENAME
 
 
 def main() -> None:
-    # conn = sqlite3.connect("cooking.sqlite3")
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
 
-    res = cur.execute("SELECT 1;")
-    print(res)
-    print(res.fetchall())
+    cur.execute(
+        """
+    CREATE TABLE IF NOT EXISTS recipes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        description TEXT NOT NULL DEFAULT ''
+    )
+    """,
+    )
 
-    res = cur.execute("SELECT 1, 2, 3;")
-    print(res)
-    print(res.fetchall())
+    cur.execute("""
+        INSERT INTO recipes (title, description)
+        VALUES ('Pasta', 'Cheesy Pasta'),
+               ('Brownie', 'Chocolate Brownie')
+        """)
 
-    res = cur.execute("SELECT 7;")
-    row = res.fetchone()
-    print("row:", row)
-    print("row result:", row[0])
+    conn.commit()
 
-    res = cur.execute("SELECT 'hello', 42;")
-    row = res.fetchone()
-    print("hello result row:", row)
-    print("hello result str:", row[0])
-    print("hello result int:", row[1])
+    res = cur.execute("SELECT * FROM recipes")
+    for row in res.fetchall():
+        print(row)
+
+    conn.close()
 
 
 if __name__ == "__main__":
