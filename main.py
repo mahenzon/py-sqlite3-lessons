@@ -5,6 +5,7 @@ from typing import TypedDict
 
 BASE_DIR = Path(__file__).resolve().parent
 DB_FILENAME = "cooking.db"
+# DB_PATH = ":memory:"
 DB_PATH = BASE_DIR / DB_FILENAME
 
 
@@ -14,7 +15,7 @@ def create_table(
     drop: bool = False,
 ) -> None:
     if drop:
-        cur.execute("DROP TABLE recipes")
+        cur.execute("DROP TABLE IF EXISTS recipes")
 
     cur.execute(
         """
@@ -244,6 +245,8 @@ def main() -> None:
 
     create_table(cur, drop=True)
     insert_data(cur)
+    show_all_recipes(cur)
+
     update_data(cur)
     delete_data(cur)
     show_all_recipes(cur)
