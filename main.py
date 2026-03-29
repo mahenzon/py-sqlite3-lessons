@@ -1,6 +1,7 @@
 import sqlite3
 from collections.abc import Sequence
 from pathlib import Path
+from typing import TypedDict
 
 BASE_DIR = Path(__file__).resolve().parent
 DB_FILENAME = "cooking.db"
@@ -27,6 +28,11 @@ def create_table(
 
 
 type PositionalParams = tuple[str, ...]
+
+
+class RecipeInsertParams(TypedDict):
+    title: str
+    description: str
 
 
 def insert_data(
@@ -76,6 +82,47 @@ def insert_data(
         """,
         many_params,
     )
+
+    # dict_params = {
+    #     "title": "Pancakes",
+    #     "description": "Pancakes with syrup",
+    # }
+    dict_params = RecipeInsertParams(
+        title="Pancakes",
+        description="Pancakes with syrup",
+    )
+    res = cur.execute(
+        """
+        INSERT INTO recipes (title, description)
+        VALUES (:title, :description)
+        """,
+        dict_params,
+    )
+    print("inserted", res.rowcount, "row")
+
+    dict_many_params: Sequence[RecipeInsertParams] = [
+        RecipeInsertParams(
+            title="Fruit salad",
+            description="bananas, apples, strawberries",
+        ),
+        RecipeInsertParams(
+            title="Chicken salad",
+            description="chicken, iceberg, mayo, cherry tomatoes",
+        ),
+        {
+            "title": "Roastbeef salad",
+            "description": "roasted beef, mayo, cherry tomatoes",
+        },
+    ]
+
+    res = cur.executemany(
+        """
+        INSERT INTO recipes (title, description)
+        VALUES (:title, :description)
+        """,
+        dict_many_params,
+    )
+    print("inserted", res.rowcount, "rows")
 
     cur.connection.commit()
 
